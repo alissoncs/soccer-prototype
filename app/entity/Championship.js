@@ -1,6 +1,8 @@
 import BaseModel from '../util/BaseModel'
 
-export default class Movie extends BaseModel {
+var _ = require('lodash');
+
+export default class Championship extends BaseModel {
 
   getTable() {
     return 'championships'
@@ -39,42 +41,69 @@ export default class Movie extends BaseModel {
   }
 
   fetchById( id ) {
+    const query = this.qb
+    .from('matches')
+    .select('*')
+    .leftJoin('rounds', 'matches.round_id', 'rounds.id')
+    .leftJoin('championships', 'rounds.championship_id', 'championships.id')
+    .leftJoin('teams as team1', 'matches.team1', 'team1.id')
+    .leftJoin('teams as team2', 'matches.team2', 'team2.id')
+    .where('rounds.date', '<', this.db.fn.now())
+    .andWhere('rounds.date_limit', '>', this.db.fn.now())
+    .andWhere('championships.id', id)
+    .orderBy('matches.date')
+    .options({nestTables: true, rowMode: 'array'})
 
-  let matchesQuery = `\
-    SELECT\
-    m.date as date,\
-    t.name as team1_name,\
-    t2.name as team2_name,\
-    team1, team2,\
-    r.date as round_date,\
-    r.date_limit as round_date_limit,\
-    c.country,\
-    round_id,\
-    m.id as match_id\
-    FROM matches as m\
-    INNER JOIN rounds as r ON m.round_id = r.id\
-    INNER JOIN championships as c ON r.championship_id = c.id AND c.id = ${id}\
-    INNER JOIN teams as t ON t.id = team1\
-    INNER JOIN teams as t2 ON t2.id = team2\
-    WHERE r.date < NOW() AND r.date_limit > NOW()\
-    ORDER BY m.date;`
+    let custom = {}
 
-    const { db }  = this
+    return query.then( res => {
 
-    let matchesPromise = new Promise((res, rej) => {
-      db.query( matchesQuery, (err, matches) => {
-        if(err) return rej(err)
-        return res( matches )
-      })
-    })
+      if(res.length > 0) {
+          custom = res[0].championships
+          custom.rounds = []
 
-    return super.fetchById( id )
-    .then(data => {
+          // filter rounds
+          res.forEach(item => {
 
-      return matchesPromise.then(matches => {
-        data.matches = matches
-        return data
-      })
+            item.rounds.matches = []
+
+            if(!custom.rounds.length) {
+              custom.rounds.push(item.rounds)
+            } else {
+              if(custom.rounds[custom.rounds.length-1].id != item.rounds.id) {
+                custom.rounds.push(item.rounds)
+              }
+            }
+
+          })
+
+          // filter matches
+          custom.rounds.forEach( item => {
+
+            let { id } = item
+
+            res.forEach((sms) => {
+              if(sms.matches.round_id = id) {
+
+                sms.matches.team1 = sms.team1
+                sms.matches.team2 = sms.team2
+
+                if(item.matches) {
+                  item.matches.push( sms.matches )
+                } else {
+                  item.matches = [ sms.matches ]
+                }
+              }
+            })
+
+
+          }) // endForeach
+
+
+
+      }
+
+      return custom
 
     })
 

@@ -25,11 +25,12 @@ export default class BaseModel {
 
   constructor( data , modules = {}) {
 
-    this.qb = modules.qb ? modules.qb : require('squel')
+    this.db = modules.db ? modules.db : require('../database')
+
+    this.qb = this.db
 
     this.joi = modules.joi ? modules.joi : require('joi')
 
-    this.db = modules.db ? modules.db : require('../database')
 
     this.data = data
 
@@ -72,42 +73,19 @@ export default class BaseModel {
 
   fetchAll() {
 
-    let query = this.qb
-    .select()
-    .from(this.getTable())
-
-    return new Promise( (res, rej) => {
-      return this.db.query( query.toString(), (error, result) => {
-        if( error )
-          rej()
-        else
-          res( result )
-      })
-    })
+    let query = this.qb(this.getTable())
+    .select('*')
+    return query
 
   }
 
   fetchById( id ) {
 
-    let query = this.qb
-    .select()
-    .from(this.getTable())
-    .where( 'id = ?', [ id ])
+    let query = this.qb(this.getTable())
+    .first('*')
+    .where('id', id)
 
-    return new Promise( (res, rej) => {
-
-      return this.db.query( query.toString(), (error, result) => {
-
-        if ( error )
-          rej( error )
-        else if ( result.length > 0 )
-          res( result[0] )
-        else
-          rej( {code: BaseModel.NOT_FOUND} )
-
-      })
-
-    })
+    return query
 
   } //fetchById
 

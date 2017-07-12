@@ -34,16 +34,7 @@ export default class Movie extends BaseModel {
   fetchAll( opts ) {
 
     // query for championships with active round
-    return super.fetchAll().then( (result) => {
-
-      return result.map( (item) => {
-
-        item.matches = []
-        return item
-
-      })
-
-    })
+    return super.fetchAll()
 
   }
 

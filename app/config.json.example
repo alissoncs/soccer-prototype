@@ -3,6 +3,6 @@
   "host"     : "localhost",
   "user"     : "root",
   "password" : "root",
-  "database" : "movie_checker"
+  "database" : "soccer-prototype"
 
 }

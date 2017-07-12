@@ -7,9 +7,10 @@ router.get('/', function(req, res) {
   let championship = new Championship()
   championship.fetchAll()
   .then( ( result ) => {
-    return res.send(
-      result
-    )
+    return res.send({
+      length: result.length,
+      data: result
+    })
   })
 
 })

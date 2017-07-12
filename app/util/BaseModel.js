@@ -19,7 +19,7 @@ export default class BaseModel {
     const schema = {
     };
 
-    const {error, value} = Joi.validate( data, schema)
+    return Joi.validate( data, schema)
 
   }
 
@@ -30,7 +30,6 @@ export default class BaseModel {
     this.qb = this.db
 
     this.joi = modules.joi ? modules.joi : require('joi')
-
 
     this.data = data
 
@@ -51,23 +50,10 @@ export default class BaseModel {
       })
     }
 
-    let query = this.qb
-    .insert()
-    .into(this.getTable())
-    .setFields( data )
+    let query = this.qb(this.getTable())
+    .insert( data )
 
-    return new Promise( (res, rej) => {
-
-      return this.db.query( query.toString(), (error, result, fields) => {
-
-        if( error )
-          rej(error)
-        else
-          res( result.insertId )
-
-      })
-
-    })
+    return query
 
   }
 
